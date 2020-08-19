@@ -2,8 +2,7 @@
   "variables": {
     "sn": "your_subscription_name",
     "ps": "d:/Packer.io/example/ps.publishsettings",
-    "sa": "your_storage_account",
-    "example_dir": "d:/Packer.io/example/Azure"
+    "sa": "your_storage_account"
   },
   "builders": [
     {
@@ -13,16 +12,16 @@
       "storage_account": "{{user `sa`}}",
       "storage_account_container": "images",
       "os_type": "Windows",
-      "os_image_label": "Windows Server 2012 R2 Datacenter",
-      "location": "West US",
+      "os_image_label": "Windows Server 2012 R2 Datacenter, February 2016",
+      "location": "Central US",
       "instance_size": "Small",
       "user_image_label": "PackerMade_Windows2012R2DC_inet"
     }
   ],
   "provisioners": [
     {
-      "type": "powershell-azure",
-      "script_path": "{{user `example_dir`}}/ws2012-setup.ps1"
+      "type": "azure-custom-script-extension",
+      "script_path": "./ws2012-setup.ps1"
     }
   ]
 }

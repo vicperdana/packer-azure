@@ -3,23 +3,44 @@ sudo: false
 language: go
 
 go:
-  - 1.3
-  - 1.4
+  - 1.5
+  - 1.6
+
+env:
+  - GO15VENDOREXPERIMENT=1
+
+before_install:
+  - go get github.com/axw/gocov/gocov
+  - go get github.com/matm/gocov-html
+  - go get github.com/HewlettPackard/gas
+
+script: 
+  - (cd packer && gas -fmt=json -out=results.json ./... > /dev/null)
+  - cat packer/results.json
+  - test $(grep -c "\"severity\":\s*\"HIGH\"" packer/results.json) -lt 8
+  - test -z "$(go fmt ./packer/... | tee /dev/stderr)" 
+  - go build -v ./packer/... 
+  - test -z "$(go vet ./packer/... | tee /dev/stderr)"
+  - gocov test ./packer/... > coverage.json
+  - if [[ "x$COVERAGE_HTML_URL" != "x" ]]; then gocov-html coverage.json > coverage.html; fi
+  - if [[ "x$COVERAGE_HTML_URL" != "x" ]]; then ruby ./coverage.rb; fi
+  - if [[ "x$COVERAGE_HTML_URL" != "x" ]]; then curl $COVERAGE_HTML_URL --upload-file coverage.html -H "x-ms-blob-type:BlockBlob" -H "Content-Type:text/html" -H "x-ms-blob-cache-control:no-cache"; fi
+  - if [[ "x$COVERAGE_SVG_URL"  != "x" ]]; then curl $COVERAGE_SVG_URL  --upload-file coverage.svg  -H "x-ms-blob-type:BlockBlob" -H "Content-Type:image/svg+xml" -H "x-ms-blob-cache-control:no-cache"; fi
 
 before_deploy:
   - go get github.com/mitchellh/gox
-  - gox -os="windows linux darwin" -arch="amd64" -build-toolchain 
-  - gox -arch="amd64" -os="windows linux darwin" -output "dist/{{.OS}}-{{.Arch}}/{{.Dir}}" ./...
+  - gox -arch="amd64" -os="windows linux darwin" -output "dist/{{.OS}}-{{.Arch}}/{{.Dir}}" ./packer/...
   - zip -j packer-azure-windows-amd64-${TRAVIS_TAG}.zip ./dist/windows-amd64/*
   - tar -cvzf packer-azure-linux-amd64-${TRAVIS_TAG}.tar.gz -C dist/linux-amd64/ .
   - tar -cvzf packer-azure-darwin-amd64-${TRAVIS_TAG}.tar.gz -C dist/darwin-amd64/ .
+
 deploy:
   provider: releases
   api_key: ${GITHUB_TOKEN}
-  file:
-    - packer-azure-windows-amd64-${TRAVIS_TAG}.zip
-    - packer-azure-linux-amd64-${TRAVIS_TAG}.tar.gz
-    - packer-azure-darwin-amd64-${TRAVIS_TAG}.tar.gz
+  file:    
+    - packer-azure-windows-amd64-${TRAVIS_TAG}.zip    
+    - packer-azure-linux-amd64-${TRAVIS_TAG}.tar.gz    
+    - packer-azure-darwin-amd64-${TRAVIS_TAG}.tar.gz  
   on:
     tags: true
-    go: 1.4
+    go: 1.5

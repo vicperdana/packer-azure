@@ -1,12 +1,10 @@
-// Copyright (c) Microsoft Open Technologies, Inc.
-// All Rights Reserved.
-// Licensed under the Apache License, Version 2.0.
-// See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See the LICENSE file in the project root for license information.
 
 package main
 
 import (
-	"github.com/MSOpenTech/packer-azure/packer/builder/azure/driver_restapi"
+	"github.com/Azure/packer-azure/packer/builder/azure/smapi"
 	"github.com/mitchellh/packer/packer/plugin"
 )
 
@@ -15,6 +13,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	server.RegisterBuilder(new(driver_restapi.Builder))
+	server.RegisterBuilder(new(azure.Builder))
 	server.Serve()
 }
